@@ -1,26 +1,40 @@
 const cluster = require('cluster');
 const http = require('http');
-const numCPUs = require('os').cpus().length;
 
 if (cluster.isMaster) {
-  masterProcess();
-} else {
-  childProcess();  
-}
 
-function masterProcess() {
-  console.log(`Master ${process.pid} is running`);
+  // Keep track of http requests
+  let numReqs = 0;
+  setInterval(() => {
+    console.log(`numReqs = ${numReqs}`);
+  }, 1000);
 
+  // Count requests
+  function messageHandler(msg) {
+    if (msg.cmd && msg.cmd === 'notifyRequest') {
+      numReqs += 1;
+    }
+  }
+
+  // Start workers and listen for messages containing notifyRequest
+  const numCPUs = require('os').cpus().length;
   for (let i = 0; i < numCPUs; i++) {
-    console.log(`Forking process number ${i}...`);
     cluster.fork();
   }
 
-  process.exit();
+  for (const id in cluster.workers) {
+    cluster.workers[id].on('message', messageHandler);
+  }
+
+} else {
+
+  // Worker processes have a http server.
+  http.Server((req, res) => {
+    res.writeHead(200);
+    res.end('hello world\n');
+
+    // notify master about the request
+    process.send({ cmd: 'notifyRequest' });
+  }).listen(8000);
 }
 
-function childProcess() {
-  console.log(`Worker ${process.pid} started and finished`);
-
-  process.exit();
-}

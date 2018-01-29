@@ -14,10 +14,11 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/miketoth/node-service-container/issues"
-  },  
+  },
   "dependencies": {
+    "body-parser": "*",
     "express": "*",
-    "body-parser": "*"
+    "http": "^0.0.0"
   },
   "homepage": "https://github.com/miketoth/node-service-container#readme"
 }
